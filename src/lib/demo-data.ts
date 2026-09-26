@@ -2,12 +2,14 @@
 
 export type Docs = { karte: string; kyotaku: string; mcs: string };
 
+// DB（demo_visits テーブル）の1行
 export type DemoVisit = Docs & {
   id: string;
   visit_date: string;
   patient_name: string;
-  // 「AI生成」を押したときに入る文書（音声解析結果のサンプル）
-  sample: Docs;
+  // 「AI生成」で使うサンプル文書のキー（null なら汎用サンプル）
+  sample_key: string | null;
+  updated_at: string;
 };
 
 const sato: Docs = {
@@ -105,13 +107,22 @@ HbA1c 7.2%（前回 7.4%）
 次回は1か月後に採血を予定しています。`,
 };
 
-const empty: Docs = { karte: '', kyotaku: '', mcs: '' };
+// 「AI生成」で使うサンプル文書（音声解析結果の見本）
+export const SAMPLES: Record<string, Docs> = { sato, tanaka, suzuki };
 
-export const DEMO_VISITS: DemoVisit[] = [
-  { id: 'demo-1', visit_date: '2026-09-25', patient_name: '佐藤 一郎（デモ）', ...empty, sample: sato },
-  { id: 'demo-2', visit_date: '2026-09-24', patient_name: '田中 花子（デモ）', ...tanaka, sample: tanaka },
-  { id: 'demo-3', visit_date: '2026-09-22', patient_name: '鈴木 茂（デモ）', ...empty, sample: suzuki },
+// demo_visits テーブルが空のときに入れる初期データ
+export const SEED: { visit_date: string; patient_name: string; sample_key: string; prefilled: boolean }[] = [
+  { visit_date: '2026-09-25', patient_name: '佐藤 一郎（デモ）', sample_key: 'sato', prefilled: false },
+  { visit_date: '2026-09-24', patient_name: '田中 花子（デモ）', sample_key: 'tanaka', prefilled: true },
+  { visit_date: '2026-09-22', patient_name: '鈴木 茂（デモ）', sample_key: 'suzuki', prefilled: false },
 ];
+
+export function sampleFor(v: Pick<DemoVisit, 'sample_key' | 'patient_name'>): Docs {
+  return (v.sample_key && SAMPLES[v.sample_key]) || genericSample(v.patient_name);
+}
+
+// 公開デモなので入力量に上限を設ける
+export const LIMITS = { maxRows: 100, maxName: 50, maxDoc: 20000 };
 
 // 新しく追加した訪問に対して「AI生成」したときの汎用サンプル
 export function genericSample(name: string): Docs {
