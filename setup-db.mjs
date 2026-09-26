@@ -1,6 +1,10 @@
 import { neon } from '@neondatabase/serverless';
 
-const sql = neon('postgresql://neondb_owner:npg_EV8ZmTw1Mdoz@ep-plain-cell-b3zpvouq-pooler.c-4.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require');
+if (!process.env.DATABASE_URL) {
+  console.error('DATABASE_URL を設定してください（例: node --env-file=.env.local setup-db.mjs）');
+  process.exit(1);
+}
+const sql = neon(process.env.DATABASE_URL);
 
 async function setup() {
   console.log('テーブルを作成しています...');
